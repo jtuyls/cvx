@@ -1,0 +1,115 @@
+"""
+Image operation module on top of OpenCV and numpy
+
+Authors: Jorn Tuyls
+"""
+
+import cv2
+import numpy as np
+import logging
+logger = logging.getLogger('cvx')
+
+from . import ops
+
+
+class ImgProcessor(object):
+
+    """
+    Responsible for processing image data
+
+    Arguments
+    ---------
+    proc_key: str
+        the processing key indicating what data processing to perform
+    """
+
+    def __init__(self, proc_key):
+        
+        self.proc_key = proc_key
+
+        self.proc_ops = []
+        self.proc_funcs = {}
+        self._parse_processing_funcs(proc_key)
+
+    def _parse_processing_funcs(self, proc_key):
+        # type: (str) -> None
+        """
+        Parse the processing key and translate into image transformation 
+        functions
+
+        Supported structure of the processing key is:
+        prepfuncname1-arg1-arg2val1,...,arg2valn-...-argn
+            __prepfuncname2-arg1-...-argn_...
+        """
+        proc_ops = {
+            'crop': ops.crop,
+            'normalize': ops.normalize,
+            'resize': ops.resize,
+            'scale': ops.scale,
+            'transpose': ops.transpose
+        }
+
+        proc_funcs = proc_key.split("__")
+        for proc_func in proc_funcs:
+            proc_func_parsed = proc_func.split("-")
+            
+            proc_func_name = proc_func_parsed[0]
+            if proc_func_name not in proc_ops:
+                raise NotImplementedError("Unknown processing function: {}"
+                    .format(proc_func_name))
+
+            proc_func_args = \
+                [(pfa.split(',') if ',' in pfa else pfa) for pfa in proc_func_parsed[1:]]
+            logger.debug(proc_func_args)
+
+            self.proc_ops.append(proc_func_name)
+            self.proc_funcs[proc_func_name] = proc_ops[proc_func_name](*proc_func_args)
+
+
+    def add_processing_func(self, func):
+        # type: (Function) -> None
+        """
+        Add custom preprocessing function
+        """
+        raise NotImplementedError("")
+    
+    def execute(self, X):
+        # type: (numpy.ndarray) -> numpy.ndarray
+        """
+        Process the specified image data
+
+        Arguments
+        ---------
+        X: numpy.ndarray
+            the image data in NCHW or NHWC structure
+        """
+        if X.ndim != 4:
+            raise ValueError("Image processor expects image data as"\
+                " a numpy array with 4 dimensions (NHWC or NCHW layout)"\
+                " but got array with {} dimensions.".format(X.ndim))
+        
+        logger.debug(self.proc_ops)
+        res = []
+        # Iterate over N dimension (batch)
+        for i in range(X.shape[0]):
+            img = X[i,...]
+
+            # Perform specified processing functions
+            for proc_func_name in self.proc_ops:
+                logger.debug(proc_func_name)
+                logger.debug("Shape before: {}".format(img.shape))
+
+                img = self.proc_funcs[proc_func_name](img)
+
+                logger.debug("Shape after: {}".format(img.shape))
+
+            # HWC -> CHW if requested
+
+            #if self.layout == 'CHW':
+            #    img = np.transpose(img, (2,0,1)) # HWC -> CHW
+
+            res.append(img)
+        
+        return np.array(res)
+
+
