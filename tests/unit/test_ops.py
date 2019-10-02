@@ -94,10 +94,64 @@ class TestImgProcessor(unittest.TestCase):
             (1,2,0)
         )
 
-        resize_func = ops.resize(size=[2,2])
+        resize_func = ops.resize(size=[3,2])
         res = resize_func(img)
 
+        assert(len(res.shape) == 3 and res.shape[0] == 2 and res.shape[1] == 3)
+
+    def test_resize_aspect_preservation(self):
+        logger.debug("Test resize aspect preservation")
+        
+        # HWC
+        img = np.transpose(
+            np.reshape(np.array([
+                [[10,10,0],
+                [50,10,0],
+                [0,0,0]],
+                [[30,50,0],
+                [10,90,0],
+                [0,0,0]],
+                [[20,0,0],
+                [0,0,0],
+                [0,0,0]]
+            ], np.float32), (3,3,3)),
+            (1,2,0)
+        )
+
+        resize_func = ops.resize(size=[2,None])
+        res = resize_func(img)
         assert(len(res.shape) == 3 and res.shape[0] == 2 and res.shape[1] == 2)
+
+        resize_func = ops.resize(size=[1,None])
+        res = resize_func(img)
+        assert(len(res.shape) == 3 and res.shape[0] == 1 and res.shape[1] == 1)
+
+        resize_func = ops.resize(size=[3,None])
+        res = resize_func(img)
+        assert(len(res.shape) == 3 and res.shape[0] == 3 and res.shape[1] == 3)
+
+        # HWC
+        img = np.transpose(
+            np.reshape(np.array([
+                [[10,10,0],
+                [50,10,0],
+                [0,0,0],
+                [0,0,0]],
+                [[30,50,0],
+                [10,90,0],
+                [0,0,0],
+                [0,0,0]],
+                [[20,0,0],
+                [0,0,0],
+                [0,0,0],
+                [0,0,0]]
+            ], np.float32), (3,4,3)),
+            (1,2,0)
+        )
+
+        resize_func = ops.resize(size=[None,2])
+        res = resize_func(img)
+        assert(len(res.shape) == 3 and res.shape[0] == 2 and res.shape[1] == 1)
 
     def test_scale(self):
         logger.debug("Test scale")
@@ -119,6 +173,30 @@ class TestImgProcessor(unittest.TestCase):
         res = scale_func(img)
 
         expected_outpt = 1.5 * img # HWC
+        
+        np.testing.assert_array_equal(res, expected_outpt)
+
+    def test_subtract(self):
+        logger.debug("Test subtract")
+        
+        # HWC
+        img = np.transpose(
+            np.reshape(np.array([
+                [[10,10],
+                [50,10]],
+                [[30,50],
+                [10,90]],
+                [[20, 0],
+                [0, 0]]
+            ], np.float32), (3,2,2)),
+            (1,2,0)
+        )
+
+        means = [30, 30, 10]
+        subtract_func = ops.subtract(values=means)
+        res = subtract_func(img)
+
+        expected_outpt = img - means
         
         np.testing.assert_array_equal(res, expected_outpt)
 

@@ -50,14 +50,30 @@ def resize(size):
     # type: (List[str/int]) -> Function
     """
     Return a wrapper function to resize an image to provided size.
+
+    Arguments
+    ---------
+    size: List[str/int]
+        the new size as a width, height tuple
     """
-    size = [int(dim) for dim in size]
+    assert(len(size) == 2)
+
+    size = [int(dim) if dim not in ['?', 'None', None] else None for dim in size]
+    assert(size != [None, None])
 
     def _resize(img):
-        print(img.dtype)
+        # !! img should be in HWC format
         if img.dtype not in ['float32']:
             raise ValueError("OpenCV resize operator expects imput array"\
                 " to have float32 data type but got: {}".format(img.dtype))
+
+        if size[0] is None:
+            height_aspect_ratio = size[1] / float(img.shape[0])
+            size[0] = int(img.shape[1] * height_aspect_ratio)
+        elif size[1] is None:
+            width_aspect_ratio = size[0] / float(img.shape[1])
+            size[1] = int(img.shape[0] * width_aspect_ratio)
+
         return cv2.resize(img, tuple(size))
 
     return _resize
@@ -65,7 +81,7 @@ def resize(size):
 def scale(scale):
     # type: (str/int/float) -> Function
     """
-    Return a wrapper function takes in an image and scales it according to 
+    Return a wrapper function that takes in an image and scales it according to 
     the provided scale argument.
     """
 
@@ -73,6 +89,18 @@ def scale(scale):
         return img * float(scale)
 
     return _scale
+
+def subtract(values):
+    # type: (List[str/int/float]) -> Function
+    """
+    Return a wrapper function that takes in an image and subtracts the provided
+    values
+    """
+
+    def _subtract(img):
+        return img - values
+
+    return _subtract
 
 def transpose(axes):
     # type: (List[str/[int]) -> Function
