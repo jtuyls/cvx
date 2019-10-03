@@ -162,6 +162,7 @@ def subtract(values):
     Return a wrapper function that takes in an image and subtracts the provided
     values
     """
+    values = [float(v) for v in values]
 
     def _subtract(img):
         return img - values
