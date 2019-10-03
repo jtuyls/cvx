@@ -62,6 +62,6 @@ class ImgLoader(object):
             imgs.append(img)
         
         # NHWC
-        return np.array(imgs)
+        return np.array(imgs).astype(np.float32)
 
 
