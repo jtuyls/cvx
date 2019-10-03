@@ -23,9 +23,14 @@ class ImgProcessor(object):
         the processing key indicating what data processing to perform
     """
 
-    def __init__(self, proc_key):
+    def __init__(self, proc_key, layout='NHWC'):
+
+        if layout not in ['NHWC']:
+            raise ValueError("Only `NHWC` layout is supported for now"\
+                " for ImgProcessor but got: {}".format(layout))
         
         self.proc_key = proc_key
+        self.layout = layout
 
         self.proc_ops = []
         self.proc_funcs = {}
@@ -41,11 +46,14 @@ class ImgProcessor(object):
         prepfuncname1-arg1-arg2val1,...,arg2valn-...-argn
             __prepfuncname2-arg1-...-argn_...
         """
+
         proc_ops = {
             'crop': ops.crop,
             'normalize': ops.normalize,
             'resize': ops.resize,
+            'resize_smallest_side': ops.resize_smallest_side,
             'scale': ops.scale,
+            'subtract': ops.subtract,
             'transpose': ops.transpose
         }
 

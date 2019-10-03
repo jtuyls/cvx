@@ -153,6 +153,36 @@ class TestImgProcessor(unittest.TestCase):
         res = resize_func(img)
         assert(len(res.shape) == 3 and res.shape[0] == 2 and res.shape[1] == 1)
 
+    def test_resize_smallest_side(self):
+        logger.debug("Test resize smallest side")
+
+        # HWC
+        img = np.transpose(
+            np.reshape(np.array([
+                [[10,10,0],
+                [50,10,0],
+                [0,0,0],
+                [0,0,0]],
+                [[30,50,0],
+                [10,90,0],
+                [0,0,0],
+                [0,0,0]],
+                [[20,0,0],
+                [0,0,0],
+                [0,0,0],
+                [0,0,0]]
+            ], np.float32), (3,4,3)),
+            (1,2,0)
+        )
+
+        resize_func = ops.resize_smallest_side(size=1)
+        res = resize_func(img)
+        assert(len(res.shape) == 3 and res.shape[0] == 1 and res.shape[1] == 1)
+
+        resize_func = ops.resize_smallest_side(size=2)
+        res = resize_func(img)
+        assert(len(res.shape) == 3 and res.shape[0] == 2 and res.shape[1] == 2)
+
     def test_scale(self):
         logger.debug("Test scale")
         

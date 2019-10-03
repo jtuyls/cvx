@@ -58,7 +58,8 @@ def resize(size):
     """
     assert(len(size) == 2)
 
-    size = [int(dim) if dim not in ['?', 'None', None] else None for dim in size]
+    size = [int(dim) if dim not in ['?', 'None', None] else None \
+        for dim in size]
     assert(size != [None, None])
 
     def _resize(img):
@@ -77,6 +78,39 @@ def resize(size):
         return cv2.resize(img, tuple(size))
 
     return _resize
+
+def resize_smallest_side(size):    
+    # type: (str/int) -> Function
+    """
+    Return a wrapper function to resize an image so that the smalles size is 
+    equal to the provided size.
+
+    Arguments
+    ---------
+    size: str/int
+        the new size of the smallest side of the image
+    """
+    size = int(size)
+
+    def get_size(height, width, aspect_ratio):
+        return (int(width * aspect_ratio), int(height * aspect_ratio))
+
+    def _resize_smallest_side(img):
+        # !! img should be in HWC format
+        if img.dtype not in ['float32']:
+            raise ValueError("OpenCV resize operator expects imput array"\
+                " to have float32 data type but got: {}".format(img.dtype))
+
+        smallest_side_size = img.shape[0] if img.shape[0] < img.shape[1] \
+            else img.shape[1]
+        aspect_ratio = size / float(smallest_side_size)
+        
+        new_size = get_size(img.shape[0], img.shape[1], aspect_ratio)
+
+        return cv2.resize(img, new_size)
+
+    return _resize_smallest_side
+
 
 def scale(scale):
     # type: (str/int/float) -> Function
