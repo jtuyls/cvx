@@ -24,12 +24,12 @@ class ImgLoader(object):
     """
 
     def __init__(self,
-                 layout='NCHW',
+                 layout='NHWC',
                  color_format='RGB'):
         
         if layout not in ['NHWC']:
-            raise ValueError("Requested image layout can only be `NHWC`"\
-                " but got {}".format(layout))
+            raise NotImplementedError("Images can only be loaded in `NHWC`"\
+                " format for now but got {}".format(layout))
         if color_format not in ['RGB', 'BGR']:
             raise ValueError("Unsupported color format: {}. The data"\
                 " loader only handles `RGB` and `BGR` for now.")
