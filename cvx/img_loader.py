@@ -59,9 +59,9 @@ class ImgLoader(object):
             #if self.layout == 'NCHW':
             #    img = np.transpose(img, (2,0,1)) # HWC -> CHW
 
-            imgs.append(img)
+            imgs.append(img.astype(np.float32))
         
         # NHWC
-        return np.array(imgs).astype(np.float32)
+        return imgs
 
 

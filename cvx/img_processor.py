@@ -83,7 +83,7 @@ class ImgProcessor(object):
         raise NotImplementedError("")
     
     def execute(self, X):
-        # type: (numpy.ndarray) -> numpy.ndarray
+        # type: (numpy.ndarray/List[numpy.ndarray]) -> numpy.ndarray
         """
         Process the specified image data
 
@@ -92,18 +92,20 @@ class ImgProcessor(object):
         X: numpy.ndarray
             the image data in NCHW or NHWC structure
         """
-        if X.ndim != 4:
+        logger.debug(self.proc_ops)
+
+        if isinstance(X, np.ndarray) and X.ndim != 4:
             raise ValueError("Image processor expects image data as"\
                 " a numpy array with 4 dimensions (NHWC or NCHW layout)"\
                 " but got array with {} dimensions.".format(X.ndim))
-        
-        logger.debug(self.proc_ops)
+
+        N = X.shape[0] if isinstance(X, np.ndarray) else len(X)
+
         res = []
         # Iterate over N dimension (batch)
-        for i in range(X.shape[0]):
-            img = X[i,...]
+        for i in range(N):
+            img = X[i]
 
-            # Perform specified processing functions
             for proc_func_name in self.proc_ops:
                 logger.debug(proc_func_name)
                 logger.debug("Shape before: {}".format(img.shape))
@@ -113,12 +115,9 @@ class ImgProcessor(object):
                 logger.debug("Shape after: {}".format(img.shape))
 
             # HWC -> CHW if requested
-
             #if self.layout == 'CHW':
             #    img = np.transpose(img, (2,0,1)) # HWC -> CHW
 
             res.append(img)
         
-        return np.array(res)
-
-
+        return np.array(res).astype(np.float32)
