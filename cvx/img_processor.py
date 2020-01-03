@@ -9,7 +9,7 @@ import numpy as np
 import logging
 logger = logging.getLogger('cvx')
 
-from . import ops
+from . import op as ops
 
 
 class ImgProcessor(object):

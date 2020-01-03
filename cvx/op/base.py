@@ -1,6 +1,6 @@
 
 """
-CV operations
+CV base operations
 
 Authors: Jorn Tuyls
 """
