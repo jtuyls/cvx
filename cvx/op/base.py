@@ -8,10 +8,11 @@ Authors: Jorn Tuyls
 import cv2
 import numpy as np
 
+
 def central_crop(height, width, channels):
     # type: (str/int, str/int, str/int) -> Function
     """
-    Return a wrapper function that takes in an image and centrally crops 
+    Return a wrapper function that takes in an image and centrally crops
     an image of provided height, width and channels
     """
     height, width, channels = int(height), int(width), int(channels)
@@ -21,15 +22,15 @@ def central_crop(height, width, channels):
         img_h, img_w, img_c = img.shape
 
         if height > img_h:
-            raise ValueError("Provided crop height is larger than provided"\
-                " image height.")
+            raise ValueError("Provided crop height is larger than provided"
+                             " image height.")
         if width > img_w:
-            raise ValueError("Provided crop width is larger than provided"\
-                " image width.")
+            raise ValueError("Provided crop width is larger than provided"
+                             " image width.")
         if channels > img_c:
             raise ValueError("Provided crop channels value is larger than"
-                " provided image channels.")
-        
+                             " provided image channels.")
+
         start_h = int((img_h - height) / 2)
         end_h = start_h + height
         start_w = int((img_w - width) / 2)
@@ -41,15 +42,16 @@ def central_crop(height, width, channels):
 
     return _central_crop
 
+
 def crop(height, width, channels):
     # type: (List[str/int], List[str/int], List[str,int]) -> Function
     """
-    Return a wrapper function that takes in an image and crops it according to 
+    Return a wrapper function that takes in an image and crops it according to
     provided height, width and channel boundaries.
     """
 
     assert(len(height) == 2 and len(width) == 2 and len(channels) == 2)
-    
+
     start_h, end_h = int(height[0]), int(height[1])
     start_w, end_w = int(width[0]), int(width[1])
     start_c, end_c = int(channels[0]), int(channels[1])
@@ -60,14 +62,15 @@ def crop(height, width, channels):
 
     return _crop
 
+
 def normalize(means, stdevs):
     # type: (List[str/int/float], List[str/int/float]) -> Function
     """
-    Return a wrapper function to normalize an image according to provided 
+    Return a wrapper function to normalize an image according to provided
     means and standard deviations.
     """
     assert(len(means) == len(stdevs))
-    
+
     means = [float(mean) for mean in means]
     stdevs = [float(stdev) for stdev in stdevs]
 
@@ -77,6 +80,7 @@ def normalize(means, stdevs):
         return (img - means) / stdevs
 
     return _normalize
+
 
 def resize(size):    
     # type: (List[str/int]) -> Function
@@ -90,15 +94,16 @@ def resize(size):
     """
     assert(len(size) == 2)
 
-    size = [int(dim) if dim not in ['?', 'None', None] else None \
-        for dim in size]
+    size = [int(dim) if dim not in ['?', 'None', None] else None
+            for dim in size]
     assert(size != [None, None])
 
     def _resize(img):
         # !! img should be in HWC format
         if img.dtype not in ['float32']:
-            raise ValueError("OpenCV resize operator expects imput array"\
-                " to have float32 data type but got: {}".format(img.dtype))
+            raise ValueError("OpenCV resize operator expects imput array"
+                             " to have float32 data type but got: {}"
+                             .format(img.dtype))
 
         if size[0] is None:
             height_aspect_ratio = size[1] / float(img.shape[0])
@@ -110,6 +115,7 @@ def resize(size):
         return cv2.resize(img, tuple(size))
 
     return _resize
+
 
 def resize_smallest_side(size):    
     # type: (str/int) -> Function
@@ -130,13 +136,14 @@ def resize_smallest_side(size):
     def _resize_smallest_side(img):
         # !! img should be in HWC format
         if img.dtype not in ['float32']:
-            raise ValueError("OpenCV resize operator expects imput array"\
-                " to have float32 data type but got: {}".format(img.dtype))
+            raise ValueError("OpenCV resize operator expects imput array"
+                             " to have float32 data type but got: {}"
+                             .format(img.dtype))
 
         smallest_side_size = img.shape[0] if img.shape[0] < img.shape[1] \
             else img.shape[1]
         aspect_ratio = size / float(smallest_side_size)
-        
+
         new_size = get_size(img.shape[0], img.shape[1], aspect_ratio)
 
         return cv2.resize(img, new_size)
@@ -147,7 +154,7 @@ def resize_smallest_side(size):
 def scale(scale):
     # type: (str/int/float) -> Function
     """
-    Return a wrapper function that takes in an image and scales it according to 
+    Return a wrapper function that takes in an image and scales it according to
     the provided scale argument.
     """
 
@@ -155,6 +162,7 @@ def scale(scale):
         return img * float(scale)
 
     return _scale
+
 
 def subtract(values):
     # type: (List[str/int/float]) -> Function
@@ -169,10 +177,11 @@ def subtract(values):
 
     return _subtract
 
+
 def transpose(axes):
     # type: (List[str/[int]) -> Function
     """
-    Return a wrapper function takes in an image and transposes it according to 
+    Return a wrapper function takes in an image and transposes it according to
     the provided axes argument.
     """
 

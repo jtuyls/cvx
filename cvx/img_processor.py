@@ -59,7 +59,7 @@ class ImgProcessor(object):
         }
 
         proc_funcs = proc_key.split("__")
-        for proc_func in proc_funcs:
+        for idx, proc_func in enumerate(proc_funcs):
             proc_func_parsed = proc_func.split("-")
             
             proc_func_name = proc_func_parsed[0]
@@ -71,9 +71,8 @@ class ImgProcessor(object):
                 [(pfa.split(',') if ',' in pfa else pfa) for pfa in proc_func_parsed[1:]]
             logger.debug(proc_func_args)
 
-            self.proc_ops.append(proc_func_name)
-            self.proc_funcs[proc_func_name] = proc_ops[proc_func_name](*proc_func_args)
-
+            self.proc_ops.append(idx)
+            self.proc_funcs[idx] = proc_ops[proc_func_name](*proc_func_args)
 
     def add_processing_func(self, func):
         # type: (Function) -> None
