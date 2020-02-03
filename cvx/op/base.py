@@ -82,7 +82,7 @@ def normalize(means, stdevs):
     return _normalize
 
 
-def resize(size):    
+def resize(size, interpolation='INTER_LINEAR'):
     # type: (List[str/int]) -> Function
     """
     Return a wrapper function to resize an image to provided size.
@@ -98,6 +98,14 @@ def resize(size):
             for dim in size]
     assert(size != [None, None])
 
+    interpolations = {
+        'INTER_NEAREST': cv2.INTER_NEAREST,
+        'INTER_LINEAR': cv2.INTER_LINEAR,
+        'INTER_AREA': cv2.INTER_AREA,
+        'INTER_CUBIC': cv2.INTER_CUBIC,
+        'INTER_LANCZOS4': cv2.INTER_LANCZOS4
+    }
+
     def _resize(img):
         # !! img should be in HWC format
         if img.dtype not in ['float32']:
@@ -112,15 +120,16 @@ def resize(size):
             width_aspect_ratio = size[0] / float(img.shape[1])
             size[1] = int(img.shape[0] * width_aspect_ratio)
 
-        return cv2.resize(img, tuple(size))
+        return cv2.resize(img, tuple(size),
+                          interpolation=interpolations[interpolation])
 
     return _resize
 
 
-def resize_smallest_side(size):    
+def resize_smallest_side(size, interpolation='INTER_LINEAR'):
     # type: (str/int) -> Function
     """
-    Return a wrapper function to resize an image so that the smalles size is 
+    Return a wrapper function to resize an image so that the smallest size is
     equal to the provided size.
 
     Arguments
@@ -129,6 +138,14 @@ def resize_smallest_side(size):
         the new size of the smallest side of the image
     """
     size = int(size)
+
+    interpolations = {
+        'INTER_NEAREST': cv2.INTER_NEAREST,
+        'INTER_LINEAR': cv2.INTER_LINEAR,
+        'INTER_AREA': cv2.INTER_AREA,
+        'INTER_CUBIC': cv2.INTER_CUBIC,
+        'INTER_LANCZOS4': cv2.INTER_LANCZOS4
+    }
 
     def get_size(height, width, aspect_ratio):
         return (int(width * aspect_ratio), int(height * aspect_ratio))
@@ -146,9 +163,77 @@ def resize_smallest_side(size):
 
         new_size = get_size(img.shape[0], img.shape[1], aspect_ratio)
 
-        return cv2.resize(img, new_size)
+        return cv2.resize(img, new_size,
+                          interpolation=interpolations[interpolation])
 
     return _resize_smallest_side
+
+
+def resize_to_multiple(multiple, keep_aspect_ratio=True,
+                       interpolation='INTER_LINEAR'):
+    # type: (str/int, str) -> Function
+    """
+    Return a wrapper function to resize an image so that the sizes are
+    a multiple of the provided value
+
+    Arguments
+    ---------
+    multiple: str/int
+        the multiple to be used for resizing
+    keep_aspect_ratio: bool
+        whether to keep the original aspect ratio
+    interpolation: str
+        which interpolation algorithm to use
+    """
+    multiple = int(multiple)
+    keep_aspect_ratio = (keep_aspect_ratio in ["1", 1, "true", "True", True])
+
+    interpolations = {
+        'INTER_NEAREST': cv2.INTER_NEAREST,
+        'INTER_LINEAR': cv2.INTER_LINEAR,
+        'INTER_AREA': cv2.INTER_AREA,
+        'INTER_CUBIC': cv2.INTER_CUBIC,
+        'INTER_LANCZOS4': cv2.INTER_LANCZOS4
+    }
+
+    def get_size(height, width, new_height, new_width):
+        scale = min(new_width / float(width), new_height / float(height))
+        return (int(height * scale), int(width * scale))
+
+    def _resize_to_multiple(img):
+        # !! img should be in HWC format
+        if img.dtype not in ['float32']:
+            raise ValueError("OpenCV resize operator expects imput array"
+                             " to have float32 data type but got: {}"
+                             .format(img.dtype))
+        height, width = img.shape[0], img.shape[1]
+
+        new_height = height - (height % multiple)
+        new_width = width - (width % multiple)
+
+        if keep_aspect_ratio:
+            resize_height, resize_width = \
+                get_size(height, width, new_height, new_width)
+
+            res = cv2.resize(img, (resize_width, resize_height),
+                             interpolation=interpolations[interpolation])
+
+            delta_h = new_height - resize_height
+            delta_w = new_width - resize_width
+            top, bottom = delta_h // 2, delta_h - (delta_h // 2)
+            left, right = delta_w // 2, delta_w - (delta_w // 2)
+
+            res = cv2.copyMakeBorder(res, top, bottom, left, right,
+                                     cv2.BORDER_CONSTANT,
+                                     value=[128, 128, 128])
+
+        else:
+            res = cv2.resize(img, (new_height, new_width),
+                             interpolation=interpolations[interpolation])
+
+        return res
+
+    return _resize_to_multiple
 
 
 def scale(scale):

@@ -53,6 +53,7 @@ class ImgProcessor(object):
             'normalize': ops.normalize,
             'resize': ops.resize,
             'resize_smallest_side': ops.resize_smallest_side,
+            'resize_to_multiple': ops.resize_to_multiple,
             'scale': ops.scale,
             'subtract': ops.subtract,
             'transpose': ops.transpose
