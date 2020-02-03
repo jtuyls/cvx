@@ -4,16 +4,17 @@ Module for testing image processing operations
 Authors: Jorn Tuyls
 """
 
+import sys
+import logging
 import unittest
 import numpy as np
 
-import sys
-import logging
+from cvx import op
+
 logger = logging.getLogger('cvx')
 logger.addHandler(logging.StreamHandler(sys.stdout))
 logger.setLevel(logging.DEBUG)
 
-from cvx import ops
 
 class TestImgProcessor(unittest.TestCase):
 
@@ -37,7 +38,7 @@ class TestImgProcessor(unittest.TestCase):
         )
 
         # 1.
-        crop_func = ops.central_crop(height=1, width=1, channels=3)
+        crop_func = op.central_crop(height=1, width=1, channels=3)
         res = crop_func(img)
 
         expected_outpt = np.transpose(
@@ -48,13 +49,13 @@ class TestImgProcessor(unittest.TestCase):
         np.testing.assert_array_equal(res, expected_outpt)
 
         # 2.
-        crop_func = ops.central_crop(height=3, width=3, channels=3)
+        crop_func = op.central_crop(height=3, width=3, channels=3)
         res = crop_func(img)
 
         np.testing.assert_array_equal(res, img)
 
         # 3.
-        crop_func = ops.central_crop(height=2, width=2, channels=3)
+        crop_func = op.central_crop(height=2, width=2, channels=3)
         res = crop_func(img)
 
         expected_outpt = np.transpose(
@@ -90,7 +91,7 @@ class TestImgProcessor(unittest.TestCase):
             (1,2,0)
         )
 
-        crop_func = ops.crop(height=[0,2], width=[0,2], channels=[1,3])
+        crop_func = op.crop(height=[0,2], width=[0,2], channels=[1,3])
         res = crop_func(img)
 
         expected_outpt = np.transpose(
@@ -122,7 +123,7 @@ class TestImgProcessor(unittest.TestCase):
         )
 
         means, stdevs = [30,30,10], [2,1.5,1]
-        norm_func = ops.normalize(means=means, stdevs=stdevs)
+        norm_func = op.normalize(means=means, stdevs=stdevs)
         res = norm_func(img)
 
         expected_outpt = (img - means) / stdevs # HWC
@@ -148,7 +149,7 @@ class TestImgProcessor(unittest.TestCase):
             (1,2,0)
         )
 
-        resize_func = ops.resize(size=[3,2])
+        resize_func = op.resize(size=[3,2])
         res = resize_func(img)
 
         assert(len(res.shape) == 3 and res.shape[0] == 2 and res.shape[1] == 3)
@@ -172,15 +173,15 @@ class TestImgProcessor(unittest.TestCase):
             (1,2,0)
         )
 
-        resize_func = ops.resize(size=[2,None])
+        resize_func = op.resize(size=[2,None])
         res = resize_func(img)
         assert(len(res.shape) == 3 and res.shape[0] == 2 and res.shape[1] == 2)
 
-        resize_func = ops.resize(size=[1,None])
+        resize_func = op.resize(size=[1,None])
         res = resize_func(img)
         assert(len(res.shape) == 3 and res.shape[0] == 1 and res.shape[1] == 1)
 
-        resize_func = ops.resize(size=[3,None])
+        resize_func = op.resize(size=[3,None])
         res = resize_func(img)
         assert(len(res.shape) == 3 and res.shape[0] == 3 and res.shape[1] == 3)
 
@@ -203,9 +204,24 @@ class TestImgProcessor(unittest.TestCase):
             (1,2,0)
         )
 
-        resize_func = ops.resize(size=[None,2])
+        resize_func = op.resize(size=[None,2])
         res = resize_func(img)
         assert(len(res.shape) == 3 and res.shape[0] == 2 and res.shape[1] == 1)
+
+    def test_resize_keep_aspect_ratio(self):
+        logger.debug("Test resize keep aspect ratio")
+        
+        # HWC
+        img = np.ones((4, 6, 3), dtype=np.float32)
+
+        resize_func = op.resize(size=[4, 4], keep_aspect_ratio=True,
+                                pad_values=[0, 0, 0])
+        res = resize_func(img)
+
+        assert len(res.shape) == 3 and res.shape[0] == 4 and res.shape[1] == 4
+        assert res.shape[2] == 3
+        assert not np.any(res[0, :, :])
+        assert not np.any(res[3, :, :])
 
     def test_resize_smallest_side(self):
         logger.debug("Test resize smallest side")
@@ -229,13 +245,28 @@ class TestImgProcessor(unittest.TestCase):
             (1,2,0)
         )
 
-        resize_func = ops.resize_smallest_side(size=1)
+        resize_func = op.resize_smallest_side(size=1)
         res = resize_func(img)
         assert(len(res.shape) == 3 and res.shape[0] == 1 and res.shape[1] == 1)
 
-        resize_func = ops.resize_smallest_side(size=2)
+        resize_func = op.resize_smallest_side(size=2)
         res = resize_func(img)
         assert(len(res.shape) == 3 and res.shape[0] == 2 and res.shape[1] == 2)
+
+    def test_resize_multiple(self):
+        logger.debug("Test resize multiple")
+        
+        # HWC
+        img = np.ones((10, 12, 3), dtype=np.float32)
+
+        resize_func = op.resize_to_multiple(8, keep_aspect_ratio=True,
+                                            pad_values=[0, 0, 0])
+        res = resize_func(img)
+
+        assert len(res.shape) == 3 and res.shape[0] == 8 and res.shape[1] == 8
+        assert res.shape[2] == 3
+        assert not np.any(res[0, :, :])
+        assert not np.any(res[7, :, :])
 
     def test_scale(self):
         logger.debug("Test scale")
@@ -253,7 +284,7 @@ class TestImgProcessor(unittest.TestCase):
             (1,2,0)
         )
 
-        scale_func = ops.scale(scale=1.5)
+        scale_func = op.scale(scale=1.5)
         res = scale_func(img)
 
         expected_outpt = 1.5 * img # HWC
@@ -277,7 +308,7 @@ class TestImgProcessor(unittest.TestCase):
         )
 
         means = [30, 30, 10]
-        subtract_func = ops.subtract(values=means)
+        subtract_func = op.subtract(values=means)
         res = subtract_func(img)
 
         expected_outpt = img - means
@@ -300,7 +331,7 @@ class TestImgProcessor(unittest.TestCase):
             (1,2,0)
         )
 
-        transpose_func = ops.transpose(axes=[2,0,1])
+        transpose_func = op.transpose(axes=[2,0,1])
         res = transpose_func(img)
 
         expected_outpt = np.transpose(img, axes=(2,0,1))

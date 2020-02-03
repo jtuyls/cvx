@@ -82,8 +82,9 @@ def normalize(means, stdevs):
     return _normalize
 
 
-def resize(size, interpolation='INTER_LINEAR'):
-    # type: (List[str/int]) -> Function
+def resize(size, interpolation='INTER_LINEAR',
+           keep_aspect_ratio=False, pad_values=None):
+    # type: (List[str/int], str, bool, List[str/int]) -> Function
     """
     Return a wrapper function to resize an image to provided size.
 
@@ -91,12 +92,23 @@ def resize(size, interpolation='INTER_LINEAR'):
     ---------
     size: List[str/int]
         the new size as a width, height tuple
+    interpolation: str
+        the interpolation algorithm to be used
+    keep_aspect_ratio: bool
+        whether to keep aspect ratio and add padding
+    pad_values:
+        the padding values to be used
     """
-    assert(len(size) == 2)
+    assert len(size) == 2
 
     size = [int(dim) if dim not in ['?', 'None', None] else None
             for dim in size]
-    assert(size != [None, None])
+    assert size != [None, None]
+
+    keep_aspect_ratio = (keep_aspect_ratio in ["1", 1, "true", "True", True])
+    assert not keep_aspect_ratio or (None not in size)
+    pad_values = [int(p) for p in pad_values] \
+        if pad_values is not None else None
 
     interpolations = {
         'INTER_NEAREST': cv2.INTER_NEAREST,
@@ -105,6 +117,10 @@ def resize(size, interpolation='INTER_LINEAR'):
         'INTER_CUBIC': cv2.INTER_CUBIC,
         'INTER_LANCZOS4': cv2.INTER_LANCZOS4
     }
+
+    def get_aspect_ratio_size(height, width, new_height, new_width):
+        scale = min(new_width / float(width), new_height / float(height))
+        return (int(height * scale), int(width * scale))
 
     def _resize(img):
         # !! img should be in HWC format
@@ -116,12 +132,37 @@ def resize(size, interpolation='INTER_LINEAR'):
         if size[0] is None:
             height_aspect_ratio = size[1] / float(img.shape[0])
             size[0] = int(img.shape[1] * height_aspect_ratio)
+            res = cv2.resize(img, tuple(size),
+                             interpolation=interpolations[interpolation])
         elif size[1] is None:
             width_aspect_ratio = size[0] / float(img.shape[1])
             size[1] = int(img.shape[0] * width_aspect_ratio)
+            res = cv2.resize(img, tuple(size),
+                             interpolation=interpolations[interpolation])
+        elif keep_aspect_ratio:
+            height, width = img.shape[0], img.shape[1]
 
-        return cv2.resize(img, tuple(size),
-                          interpolation=interpolations[interpolation])
+            new_height, new_width = size[1], size[0]
+
+            resize_height, resize_width = \
+                get_aspect_ratio_size(height, width, new_height, new_width)
+
+            res = cv2.resize(img, (resize_width, resize_height),
+                             interpolation=interpolations[interpolation])
+
+            delta_h = new_height - resize_height
+            delta_w = new_width - resize_width
+            top, bottom = delta_h // 2, delta_h - (delta_h // 2)
+            left, right = delta_w // 2, delta_w - (delta_w // 2)
+
+            res = cv2.copyMakeBorder(res, top, bottom, left, right,
+                                     cv2.BORDER_CONSTANT,
+                                     value=pad_values)
+        else:
+            res = cv2.resize(img, tuple(size),
+                             interpolation=interpolations[interpolation])
+
+        return res
 
     return _resize
 
@@ -169,9 +210,55 @@ def resize_smallest_side(size, interpolation='INTER_LINEAR'):
     return _resize_smallest_side
 
 
-def resize_to_multiple(multiple, keep_aspect_ratio=True,
-                       interpolation='INTER_LINEAR'):
+def resize_largest_side(size, interpolation='INTER_LINEAR'):
     # type: (str/int, str) -> Function
+    """
+    Return a wrapper function to resize an image so that the sizes are
+    a multiple of the provided value
+
+    Arguments
+    ---------
+    size: str/int
+        the size of the largest size to be used for resizing
+    interpolation: str
+        which interpolation algorithm to use
+    """
+    size = int(size)
+
+    interpolations = {
+        'INTER_NEAREST': cv2.INTER_NEAREST,
+        'INTER_LINEAR': cv2.INTER_LINEAR,
+        'INTER_AREA': cv2.INTER_AREA,
+        'INTER_CUBIC': cv2.INTER_CUBIC,
+        'INTER_LANCZOS4': cv2.INTER_LANCZOS4
+    }
+
+    def get_size(height, width, aspect_ratio):
+        return (int(width * aspect_ratio), int(height * aspect_ratio))
+
+    def _resize_largest_side(img):
+        # !! img should be in HWC format
+        if img.dtype not in ['float32']:
+            raise ValueError("OpenCV resize operator expects imput array"
+                             " to have float32 data type but got: {}"
+                             .format(img.dtype))
+
+        largest_side_size = img.shape[0] if img.shape[0] > img.shape[1] \
+            else img.shape[1]
+        aspect_ratio = size / float(largest_side_size)
+
+        new_size = get_size(img.shape[0], img.shape[1], aspect_ratio)
+
+        return cv2.resize(img, new_size,
+                          interpolation=interpolations[interpolation])
+
+    return _resize_largest_side
+
+
+def resize_to_multiple(multiple, interpolation='INTER_LINEAR',
+                       keep_aspect_ratio=True,
+                       pad_values=None):
+    # type: (str/int, str, bool, List[str/int]) -> Function
     """
     Return a wrapper function to resize an image so that the sizes are
     a multiple of the provided value
@@ -180,13 +267,17 @@ def resize_to_multiple(multiple, keep_aspect_ratio=True,
     ---------
     multiple: str/int
         the multiple to be used for resizing
-    keep_aspect_ratio: bool
-        whether to keep the original aspect ratio
     interpolation: str
         which interpolation algorithm to use
+    keep_aspect_ratio: bool
+        whether to keep the original aspect ratio
+    pad_values: List[str/int]
+        the values to be used for padding
     """
     multiple = int(multiple)
     keep_aspect_ratio = (keep_aspect_ratio in ["1", 1, "true", "True", True])
+    pad_values = [int(p) for p in pad_values] \
+        if pad_values is not None else None
 
     interpolations = {
         'INTER_NEAREST': cv2.INTER_NEAREST,
@@ -225,7 +316,7 @@ def resize_to_multiple(multiple, keep_aspect_ratio=True,
 
             res = cv2.copyMakeBorder(res, top, bottom, left, right,
                                      cv2.BORDER_CONSTANT,
-                                     value=[128, 128, 128])
+                                     value=pad_values)
 
         else:
             res = cv2.resize(img, (new_height, new_width),
