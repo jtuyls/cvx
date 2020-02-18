@@ -106,6 +106,45 @@ class TestImgProcessor(unittest.TestCase):
         
         np.testing.assert_array_equal(res, expected_outpt)
 
+    def test_flip(self):
+        logger.debug("Test flip")
+        
+        # HWC
+        img = np.transpose(
+            np.reshape(np.array([
+                [[10,10,0],
+                [50,10,0],
+                [0,0,0]],
+                [[30,50,0],
+                [10,90,0],
+                [0,0,0]],
+                [[20,0,0],
+                [0,0,0],
+                [0,0,0]]
+            ], np.float32), (3,3,3)),
+            (1,2,0)
+        )
+
+        flip_func = op.flip(axes=[2])
+        res = flip_func(img)
+
+        expected_outpt = np.transpose(
+            np.reshape(np.array([
+                [[20,0,0],
+                 [0,0,0],
+                 [0,0,0]],
+                [[30,50,0],
+                 [10,90,0],
+                 [0,0,0]],
+                [[10,10,0],
+                 [50,10,0],
+                 [0,0,0]],
+            ]), (3,3,3)),
+            (1,2,0)
+        ) # HWC
+        
+        np.testing.assert_array_equal(res, expected_outpt)
+
     def test_normalize(self):
         logger.debug("Test normalize")
         

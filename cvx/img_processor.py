@@ -50,6 +50,7 @@ class ImgProcessor(object):
         proc_ops = {
             'central_crop': ops.central_crop,
             'crop': ops.crop,
+            'flip': ops.flip,
             'normalize': ops.normalize,
             'resize': ops.resize,
             'resize_smallest_side': ops.resize_smallest_side,

@@ -62,6 +62,18 @@ def crop(height, width, channels):
 
     return _crop
 
+def flip(axes):
+    # type: (List[str/int]) -> Function
+    """
+    Return a wrapper function that takes in an image and flips the provided axes
+    """
+
+    axes = tuple([int(a) for a in axes])
+
+    def _flip(img):
+        return np.flip(img, axes)
+
+    return _flip
 
 def normalize(means, stdevs):
     # type: (List[str/int/float], List[str/int/float]) -> Function
@@ -107,7 +119,7 @@ def resize(size, interpolation='INTER_LINEAR',
 
     keep_aspect_ratio = (keep_aspect_ratio in ["1", 1, "true", "True", True])
     assert not keep_aspect_ratio or (None not in size)
-    pad_values = [int(p) for p in pad_values] \
+    pad_values = [float(p) for p in pad_values] \
         if pad_values is not None else None
 
     interpolations = {
@@ -276,7 +288,7 @@ def resize_to_multiple(multiple, interpolation='INTER_LINEAR',
     """
     multiple = int(multiple)
     keep_aspect_ratio = (keep_aspect_ratio in ["1", 1, "true", "True", True])
-    pad_values = [int(p) for p in pad_values] \
+    pad_values = [float(p) for p in pad_values] \
         if pad_values is not None else None
 
     interpolations = {
