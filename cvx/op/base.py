@@ -43,6 +43,24 @@ def central_crop(height, width, channels):
     return _central_crop
 
 
+def swap_channels(axes):
+    # type: (List[str/[int]) -> Function
+    """
+    Return a wrapper function takes in an image and swaps channels
+    according to the provided axes argument.
+
+    E.g RGB -> BGR or BGR -> RGB
+    """
+
+    def _swap_channels(img):
+        # Img is in HWC
+        channels = [img[:, :, i] for i in [0, 1, 2]]
+
+        return np.stack(tuple([channels[a] for a in axes]), axis=2)
+
+    return _transpose
+
+
 def crop(height, width, channels):
     # type: (List[str/int], List[str/int], List[str,int]) -> Function
     """
@@ -62,10 +80,12 @@ def crop(height, width, channels):
 
     return _crop
 
+
 def flip(axes):
     # type: (List[str/int]) -> Function
     """
-    Return a wrapper function that takes in an image and flips the provided axes
+    Return a wrapper function that takes in an image and flips the
+    provided axes
     """
 
     axes = tuple([int(a) for a in axes])
@@ -74,6 +94,7 @@ def flip(axes):
         return np.flip(img, axes)
 
     return _flip
+
 
 def normalize(means, stdevs):
     # type: (List[str/int/float], List[str/int/float]) -> Function

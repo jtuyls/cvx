@@ -20,21 +20,21 @@ class TestImgProcessor(unittest.TestCase):
 
     def test_central_crop(self):
         logger.debug("Test central crop")
-        
+
         # HWC
         img = np.transpose(
             np.reshape(np.array([
-                [[10,10,0],
-                [50,10,0],
-                [0,0,0]],
-                [[30,50,0],
-                [10,90,0],
-                [0,0,0]],
-                [[20,0,0],
-                [0,0,0],
-                [0,0,0]]
-            ], np.float32), (3,3,3)),
-            (1,2,0)
+                [[10, 10, 0],
+                 [50, 10, 0],
+                 [0, 0, 0]],
+                [[30, 50, 0],
+                 [10, 90, 0],
+                 [0, 0, 0]],
+                [[20, 0, 0],
+                 [0, 0, 0],
+                 [0, 0, 0]]
+            ], np.float32), (3, 3, 3)),
+            (1, 2, 0)
         )
 
         # 1.
@@ -42,10 +42,10 @@ class TestImgProcessor(unittest.TestCase):
         res = crop_func(img)
 
         expected_outpt = np.transpose(
-            np.reshape(np.array([10, 90, 0]), (3,1,1)),
-            (1,2,0)
-        ) # HWC
-        
+            np.reshape(np.array([10, 90, 0]), (3, 1, 1)),
+            (1, 2, 0)
+        )  # HWC
+
         np.testing.assert_array_equal(res, expected_outpt)
 
         # 2.
@@ -60,35 +60,68 @@ class TestImgProcessor(unittest.TestCase):
 
         expected_outpt = np.transpose(
             np.reshape(np.array([
-                [[10,10],
-                [50,10]],
-                [[30,50],
-                [10,90]],
-                [[20,0],
-                [0,0]]
-            ], np.float32), (3,2,2)),
-            (1,2,0)
+                [[10, 10],
+                 [50, 10]],
+                [[30, 50],
+                 [10, 90]],
+                [[20, 0],
+                 [0, 0]]
+            ], np.float32), (3, 2, 2)),
+            (1, 2, 0)
+        )
+
+        np.testing.assert_array_equal(res, expected_outpt)
+
+    def test_transpose(self):
+        logger.debug("Test transpose")
+
+        # HWC
+        img = np.transpose(
+            np.reshape(np.array([
+                [[10, 10],
+                 [50, 10]],
+                [[30, 50],
+                 [10, 90]],
+                [[20, 0],
+                 [0, 0]]
+            ], np.float32), (3, 2, 2)),
+            (1, 2, 0)
+        )
+
+        chswap_func = op.swap_channels(axes=[2, 1, 0])
+        res = chswap_func(img)
+
+        expected_outpt = np.transpose(
+            np.reshape(np.array([
+                [[20, 0],
+                 [0, 0]],
+                [[30, 50],
+                 [10, 90]],
+                [[10, 10],
+                 [50, 10]]
+            ], np.float32), (3, 2, 2)),
+            (1, 2, 0)
         )
 
         np.testing.assert_array_equal(res, expected_outpt)
 
     def test_crop(self):
         logger.debug("Test crop")
-        
+
         # HWC
         img = np.transpose(
             np.reshape(np.array([
-                [[10,10,0],
-                [50,10,0],
-                [0,0,0]],
-                [[30,50,0],
-                [10,90,0],
-                [0,0,0]],
-                [[20,0,0],
-                [0,0,0],
-                [0,0,0]]
-            ], np.float32), (3,3,3)),
-            (1,2,0)
+                [[10, 10, 0],
+                 [50, 10, 0],
+                 [0, 0, 0]],
+                [[30, 50, 0],
+                 [10, 90, 0],
+                 [0, 0, 0]],
+                [[20, 0, 0],
+                 [0, 0, 0],
+                 [0, 0, 0]]
+            ], np.float32), (3, 3, 3)),
+            (1, 2, 0)
         )
 
         crop_func = op.crop(height=[0,2], width=[0,2], channels=[1,3])
@@ -96,19 +129,19 @@ class TestImgProcessor(unittest.TestCase):
 
         expected_outpt = np.transpose(
             np.reshape(np.array([
-                [[30,50],
-                [10,90]],
+                [[30, 50],
+                 [10, 90]],
                 [[20, 0],
-                [0, 0]]
-            ]), (2,2,2)),
-            (1,2,0)
-        ) # HWC
-        
+                 [0, 0]]
+            ]), (2, 2, 2)),
+            (1, 2, 0)
+        )  # HWC
+
         np.testing.assert_array_equal(res, expected_outpt)
 
     def test_flip(self):
         logger.debug("Test flip")
-        
+
         # HWC
         img = np.transpose(
             np.reshape(np.array([

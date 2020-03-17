@@ -9,11 +9,13 @@ import numpy as np
 
 import sys
 import logging
+
+from cvx.img_processor import ImgProcessor
+
 logger = logging.getLogger('cvx')
 logger.addHandler(logging.StreamHandler(sys.stdout))
 logger.setLevel(logging.DEBUG)
 
-from cvx.img_processor import ImgProcessor
 
 class TestImgProcessor(unittest.TestCase):
 

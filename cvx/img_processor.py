@@ -7,9 +7,10 @@ Authors: Jorn Tuyls
 import cv2
 import numpy as np
 import logging
-logger = logging.getLogger('cvx')
 
 from . import op as ops
+
+logger = logging.getLogger('cvx')
 
 
 class ImgProcessor(object):
@@ -26,9 +27,10 @@ class ImgProcessor(object):
     def __init__(self, proc_key, layout='NHWC'):
 
         if layout not in ['NHWC']:
-            raise ValueError("Only `NHWC` layout is supported for now"\
-                " for ImgProcessor but got: {}".format(layout))
-        
+            raise ValueError("Only `NHWC` layout is supported for now"
+                             " for ImgProcessor but got: {}"
+                             .format(layout))
+
         self.proc_key = proc_key
         self.layout = layout
 
@@ -39,7 +41,7 @@ class ImgProcessor(object):
     def _parse_processing_funcs(self, proc_key):
         # type: (str) -> None
         """
-        Parse the processing key and translate into image transformation 
+        Parse the processing key and translate into image transformation
         functions
 
         Supported structure of the processing key is:
@@ -49,6 +51,7 @@ class ImgProcessor(object):
 
         proc_ops = {
             'central_crop': ops.central_crop,
+            'chswap': ops.swap_channels,
             'crop': ops.crop,
             'flip': ops.flip,
             'normalize': ops.normalize,
@@ -63,14 +66,15 @@ class ImgProcessor(object):
         proc_funcs = proc_key.split("__")
         for idx, proc_func in enumerate(proc_funcs):
             proc_func_parsed = proc_func.split("-")
-            
+
             proc_func_name = proc_func_parsed[0]
             if proc_func_name not in proc_ops:
                 raise NotImplementedError("Unknown processing function: {}"
-                    .format(proc_func_name))
+                                          .format(proc_func_name))
 
             proc_func_args = \
-                [(pfa.split(',') if ',' in pfa else pfa) for pfa in proc_func_parsed[1:]]
+                [(pfa.split(',') if ',' in pfa else pfa)
+                 for pfa in proc_func_parsed[1:]]
             logger.debug(proc_func_args)
 
             self.proc_ops.append(idx)
@@ -82,7 +86,7 @@ class ImgProcessor(object):
         Add custom preprocessing function
         """
         raise NotImplementedError("")
-    
+
     def execute(self, X):
         # type: (numpy.ndarray/List[numpy.ndarray]) -> numpy.ndarray
         """
@@ -96,9 +100,10 @@ class ImgProcessor(object):
         logger.debug(self.proc_ops)
 
         if isinstance(X, np.ndarray) and X.ndim != 4:
-            raise ValueError("Image processor expects image data as"\
-                " a numpy array with 4 dimensions (NHWC or NCHW layout)"\
-                " but got array with {} dimensions.".format(X.ndim))
+            raise ValueError("Image processor expects image data as"
+                             " a numpy array with 4 dimensions (NHWC"
+                             " or NCHW layout) but got array with {}"
+                             " dimensions.".format(X.ndim))
 
         N = X.shape[0] if isinstance(X, np.ndarray) else len(X)
 
@@ -116,9 +121,9 @@ class ImgProcessor(object):
                 logger.debug("Shape after: {}".format(img.shape))
 
             # HWC -> CHW if requested
-            #if self.layout == 'CHW':
+            # if self.layout == 'CHW':
             #    img = np.transpose(img, (2,0,1)) # HWC -> CHW
 
             res.append(img)
-        
+
         return np.array(res).astype(np.float32)
